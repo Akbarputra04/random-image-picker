@@ -1,8 +1,10 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { readdir, writeFile, unlink } from "fs/promises";
 
-export const GET = async (req: NextRequest, res: NextResponse) => {
+export const GET = async () => {
     try {
         const images = await readdir(path.join(process.cwd(), "public/uploaded/"))
         return NextResponse.json({ Message: "Success", data: images, status: 201 });
@@ -12,7 +14,7 @@ export const GET = async (req: NextRequest, res: NextResponse) => {
     }
 };
 
-export const POST = async (req: NextRequest, res: NextResponse) => {
+export const POST = async (req: NextRequest) => {
     const formData = await req.formData();
 
     const files = formData.getAll("file");
@@ -38,7 +40,7 @@ export const POST = async (req: NextRequest, res: NextResponse) => {
     }
 };
 
-export const DELETE = async (req: NextRequest, res: NextResponse) => {
+export const DELETE = async () => {
     try {
         const images = await readdir(path.join(process.cwd(), "public/uploaded/"))
         images.map(async image => await unlink(path.join(process.cwd(), "public/uploaded/" + image)))

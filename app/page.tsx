@@ -61,7 +61,7 @@ const Home = () => {
       </label>
       {images?.length > 0 && (
         <div className="flex flex-wrap items-center justify-center gap-5">
-          {images?.map((image: any) => (
+          {images?.map((image: string) => (
             <img key={image} src={image} width={200} />
           ))}
         </div>
