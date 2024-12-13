@@ -109,7 +109,7 @@ const PickImage = () => {
 		return () => {
 			document.removeEventListener('keydown', keyDownHandler)
 		}
-	}, [loading])
+	}, [loading, picked])
 
 	return (
 		<>
