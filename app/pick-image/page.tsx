@@ -10,9 +10,10 @@ import { useEffect, useState } from "react"
 
 const PickImage = () => {
 	const [images, setImages] = useState<string[]>([])
-	const [loading, setLoading] = useState<any>()
+	const [loading, setLoading] = useState<any>(false)
+	const [pickedLength, setPickedLength] = useState<number>(1)
 	const [pickedTemp, setPickedTemp] = useState<string>('')
-	const [picked, setPicked] = useState<string>('')
+	const [picked, setPicked] = useState<string[]>([])
 	const [pickedItems, setPickedItems] = useState<string[]>([])
 
 	const shuffle = (interval: number) => {
@@ -23,23 +24,47 @@ const PickImage = () => {
 	};
 
 	const stopShuffle = () => {
-		const picked = pickedTemp
 		clearInterval(loading)
 		setLoading(null)
-		setPicked(picked)
-		pickedItems.push(picked.split('/')[picked.split('/').length - 1])
-		localStorage.setItem('pickedItems', JSON.stringify(pickedItems))
+		if (pickedLength == 1) {
+			const picked = pickedTemp
+			setPicked([picked])
+			pickedItems.push(picked.split('/')[picked.split('/').length - 1])
+			localStorage.setItem('pickedItems', JSON.stringify(pickedItems))
+		} else {
+			const pickeds: string[] = []
+			for (let i = 0; i < pickedLength; i++) {
+				const picked = images[Math.floor(Math.random() * images.length)]
+				pickeds.push(picked);
+				pickedItems.push(picked.split('/')[picked.split('/').length - 1])
+			}
+			setPicked([...new Set(pickeds)])
+			localStorage.setItem('pickedItems', JSON.stringify([...new Set(pickedItems)]))
+		}
 		getImages()
 		getPickedItems()
 	}
 
 	const handleStart = () => {
-		setPicked('')
+		setPicked([])
 		setLoading(shuffle(50))
 	}
 
 	const handleStop = () => {
 		stopShuffle()
+	}
+
+	const handleClose = () => {
+		setPicked([])
+		getImages()
+		getPickedItems()
+	}
+
+	const handleClearSelected = () => {
+		setPicked([])
+		localStorage.removeItem('pickedItems')
+		getImages()
+		getPickedItems()
 	}
 
 	const getImages = async () => {
@@ -64,16 +89,18 @@ const PickImage = () => {
 		getPickedItems()
 	}, [])
 
-
-	useEffect(() => {
-	}, [])
-
 	useEffect(() => {
 		const keyDownHandler = (event: KeyboardEvent) => {
-			if (event.code === 'Enter') {
-				handleStart()
-			} else if (event.code === 'Space') {
-				handleStop()
+			if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(event.key)) {
+				setPickedLength(Number(event.key) > 6 ? 6 : Number(event.key))
+			} else if (picked.length > 0 && event.key == 'Escape') {
+				handleClose()
+			} else {
+				if (loading) {
+					handleStop()
+				} else {
+					handleStart()
+				}
 			}
 		}
 
@@ -82,31 +109,25 @@ const PickImage = () => {
 		return () => {
 			document.removeEventListener('keydown', keyDownHandler)
 		}
-	}, [])
+	}, [loading])
 
 	return (
 		<>
-			<div className="min-h-dvh flex flex-col justify-center items-center space-x-6 gap-5" style={{ background: 'url(/bg.jpg)', backgroundSize: 'cover' }}>
-				{/* <div className="h-full w-full px-96">
-					<Swiper
-						ref={swiperRef}
-						modules={[EffectCards]}
-						effect="cards"
-						grabCursor={true}
-						width={600}
-						onClick={loading ? handleStop : handleStart}
-					>
-						{images?.map(image => (
-							<SwiperSlide key={image}>
-								<img src={image} className="shadow-lg rounded-lg" />
-							</SwiperSlide>
+			<div className="relative" style={{ background: 'url(/bg.jpg)', backgroundSize: 'cover' }}>
+				<div className="flex flex-col justify-center items-center w-screen h-screen gap-10">
+					{images && <img src={pickedTemp || images[0]} width={700} className="shadow-lg rounded-lg" />}
+					<div className="flex flex-col gap-2">
+						<button className="px-10 py-3 bg-violet-700 hover:bg-violet-900 rounded-full font-bold shadow-md" onClick={loading ? handleStop : handleStart}>{loading ? 'Stop' : `(${pickedLength}) Start`}</button>
+						{/* <button className="px-8 py-2 text-sm hover:bg-white hover:text-black rounded-full font-bold shadow-md" onClick={handleClearSelected}>Clear Selected</button> */}
+					</div>
+				</div>
+				<div className={`flex-col gap-10 justify-center items-center bg-black bg-opacity-80 absolute z-50 h-dvh w-dvw left-0 top-0 transition-all duration-1000 ${picked.length > 0 ? 'opacity-1 flex' : 'opacity-0 hidden'}`}>
+					<div className="flex flex-wrap justify-center items-center gap-10">
+						{picked.map(item => (
+							<img key={item} src={item} alt="picked image" width={800 / (pickedLength > 2 ? 2 : pickedLength)} className={`object-contain shadow-lg rounded-lg transition-all duration-5000 delay-1000 ${picked ? 'opacity-1 scale-100' : 'opacity-0 scale-0'}`} />
 						))}
-					</Swiper>
-				</div> */}
-				{images && <img src={pickedTemp || images[0]} width={700} className="shadow-lg rounded-lg" />}
-				<img src={picked || 'empty'} alt="picked image" width={800} className={`absolute z-50 shadow-lg rounded-lg transition-all duration-500 ${picked ? 'opacity-1 scale-100' : 'opacity-0 scale-0'}`} />
-				<div className="flex flex-col item-center fixed bottom-10 gap-2 transition-all duration-500">
-					<button className="px-10 py-3 bg-violet-700 hover:bg-violet-900 rounded-full font-bold shadow-md" onClick={loading ? handleStop : handleStart}>{loading ? 'Stop' : 'Start'}</button>
+					</div>
+					<button className="px-10 py-3 bg-violet-700 hover:bg-violet-900 rounded-full font-bold shadow-md" onClick={handleClose}>Close</button>
 				</div>
 			</div>
 		</>
